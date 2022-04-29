@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" class="mdl-js">
+<head>
+    {% load i18n static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <title>Аналитика бота поддержки</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.10/css/select2.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
+
+    <style>
+
+        .pointer {
+            cursor: pointer;
+        }
+
+        .layout-fixed {
+            table-layout: fixed;
+        }
+
+        .header {
+            position: fixed;
+            z-index: 1;
+            width: 100%;
+        }
+
+        #daterange {
+            display: inline-block;
+            background: #fff;
+            cursor: pointer;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+        }
+
+        .container-fluid {
+            padding-top: 70px;
+        }
+
+        .sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 2;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            padding-top: 60px;
+            transition: 0.5s;
+        }
+
+        .sidenav a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 20px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidenav a:hover {
+            color: #f1f1f1;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        #menu_button {
+            width: 23px;
+            margin: 5px 20px 5px 0px;
+        }
+
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
+        }
+
+        @media screen and (max-width: 700px) {
+            .layout-fixed {
+                table-layout: auto;
+            }
+        }
+
+    </style>
+
+<body>
+
+<div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="{% url 'admin:index' %}">Администрирование</a>
+    <a href="{% url 'monitor' %}">Аналитика бота поддержки</a>
+</div>
+
+<div class="align-items-center bg-white border-bottom d-flex header px-md-4">
+    <img id="menu_button" class="pointer" src="{% static "img/menu.png" %}" onclick="openNav()">
+    <h5 class="my-0 mr-md-auto">Аналитика бота поддержки</h5>
+    <form method="get" id="filter_form">
+        {{ form.non_field_errors }}
+        <label>Выберите период:</label>
+        <div id="daterange">
+            <input id="id_daterange" type="text" name="daterange" value="{{ daterange }}" hidden>
+            <i class=" fa fa-calendar"></i>&nbsp;<span>{{ daterange }}</span> <i class="fa fa-caret-down"></i>
+        </div>
+        <button type="submit" class="btn btn-dark ml-3">Ок</button>
+    </form>
+</div>
+
+<div class="container-fluid">
+
+    <div class="col-12 col-sm-12 col-md-12">
+        <h5>Монитор</h5>
+        <p>Уникальных посетителей бота: <b>{{ monitor.users }}</b></p>
+        <p>Авторизовавшихся пользователей: <b>{{ monitor.auth }}</b></p>
+        <p>Не-гербов: <b>{{ monitor.nonherb }}</b></p>
+        <p>Сообщений: <b>{{ monitor.msgs }}</b></p>
+        <p>Автоматических ответов: <b>{{ monitor.auto_msgs }}</b></p>
+        <p>Сообщений от пользователей: <b>{{ monitor.user_msgs }}</b></p>
+        <p>Сообщений от менеджеров: <b>{{ monitor.manager_msgs }}</b></p>
+    </div>
+
+    <div class="col-12 col-sm-12 col-md-12">
+        <h5>Динамика обращений к складу через бота</h5>
+        <table class="table layout-fixed">
+            <thead class="thead-dark">
+            <tr>
+                <th scope="col">Метрика</th>
+                {% for dh in date_headers %}
+                    <th scope="col">{{ dh }}</th>
+                {% endfor %}
+                <th scope="col">Общее кол-во на конец периода</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for metric_name, data in metrics.items %}
+                <tr>
+                    <td>{{ metric_name }}</td>
+                    {% for d in data %}
+                        {% if forloop.last or metric_name == 'Пользователей на неделе' %}
+                            <td>{{ d }}</td>
+                        {% else %}
+                            <td>+{{ d }}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-12 col-sm-12 col-md-12">
+        <h5>Самые популярные пункты меню</h5>
+        <table class="table layout-fixed">
+            <thead class="thead-dark">
+            <tr>
+                <th scope="col">Меню</th>
+                <th scope="col">Переходов</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for state in monitor.states %}
+                <tr>
+                    <td>{{ state.0 }}</td>
+                    <td>{{ state.1 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script>
+    function openNav() {
+        document.getElementById("mySidenav").style.width = "250px";
+    }
+
+    function closeNav() {
+        document.getElementById("mySidenav").style.width = "0";
+    }
+
+    $(function () {
+
+        moment.locale('ru', {week: {dow: 1}});
+
+        function range_to_str(start, end) {
+            let value = start.format('D.MM.YYYY') + ' - ' + end.format('D.MM.YYYY');
+            $('#daterange span').html(value);
+            $('#daterange input').val(value);
+        }
+
+        $('#daterange').daterangepicker({
+            minDate: new Date('2020-07-27'),
+            ranges: {
+                'Прошлый месяц': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Текущий месяц': [moment().startOf('month'), moment().endOf('month')],
+                'С самого начала': [new Date('2020-07-27'), moment()]
+            },
+            locale: {
+                "customRangeLabel": "Выбрать период",
+            },
+        }, range_to_str);
+        if (!$('#daterange input').val()) {
+            let start = moment().subtract(3, 'week').startOf('week');
+            let end = moment().endOf('week');
+            range_to_str(start, end);
+        }
+
+    });
+</script>
+
+</body>
+</html>

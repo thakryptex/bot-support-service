@@ -1,0 +1,81 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n  %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        input[readonly] {
+            color: #7f7f7f;
+            background: #f0f0f0;
+        }
+    </style>
+{% endblock %}
+
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script>
+        function rusToLatin(str) {
+            const ru = new Map([
+                ['а', 'a'], ['б', 'b'], ['в', 'v'], ['г', 'g'], ['д', 'd'], ['е', 'e'],
+                ['є', 'e'], ['ё', 'e'], ['ж', 'j'], ['з', 'z'], ['и', 'i'], ['ї', 'yi'], ['й', 'i'],
+                ['к', 'k'], ['л', 'l'], ['м', 'm'], ['н', 'n'], ['о', 'o'], ['п', 'p'], ['р', 'r'],
+                ['с', 's'], ['т', 't'], ['у', 'u'], ['ф', 'f'], ['х', 'h'], ['ц', 'c'], ['ч', 'ch'],
+                ['ш', 'sh'], ['щ', 'shch'], ['ы', 'y'], ['э', 'e'], ['ю', 'u'], ['я', 'ya'],
+            ]);
+            str = str.replace(/[ъь]+/g, '').replace(/\s+/g, '_');
+            return Array.from(str.toLowerCase())
+                .reduce((s, l) =>
+                    s + (
+                          ru.get(l)
+                          || ru.get(l.toLowerCase()) === undefined && l
+                          || ru.get(l.toLowerCase()).toUpperCase()
+                      ), '');
+        }
+        
+        function randomString(n) {
+            return btoa(Math.random()).substr(5, n);
+        }
+
+        function toggleFieldReadonly(field, is_checked) {
+            if (is_checked) {
+                field.attr('readonly', 'readonly');
+            } else {
+                field.removeAttr('readonly');
+            }
+        }
+
+        function update_node_field(text) {
+            let node_id = 'node_' + rusToLatin(text).slice(0, 10).replace(/_$/g, '') + '_' + randomString(7);
+            $('#id_node_id').val(node_id);
+        }
+
+        $(document).ready(function () {
+
+            let input = $('#id_input_waiting');
+            let btn_name = $('#id_button_name');
+
+            var btn_text = btn_name.val();
+
+            toggleFieldReadonly(btn_name, input.prop('checked'));
+            input.change(function () {
+                let is_checked = $(this).prop('checked');
+                toggleFieldReadonly(btn_name, is_checked);
+                if (is_checked) {
+                    btn_name.val('Ввод текста');
+                    update_node_field('Ввод');
+                } else {
+                    btn_name.val(btn_text);
+                    update_node_field(btn_text);
+                }
+            });
+
+            btn_name.change(function () {
+                btn_text = $(this).val();
+                update_node_field(btn_text);
+            });
+        });
+    </script>
+{% endblock %}

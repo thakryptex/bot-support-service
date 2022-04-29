@@ -1,0 +1,11 @@
+swagger: "2.0"
+info:
+  description: "Гербот"
+  version: "0.0.1"
+  title: "Бот-сервис"
+  contact:
+    email: ""
+host: ""
+basePath: "/"
+schemes:
+- "http"
